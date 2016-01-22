@@ -1,0 +1,8 @@
+{
+  "name": "application-name",
+  "version": "0.0.1",
+  "dependencies": {
+    "moment": "^2.11.0",
+    "wheniwork-unofficial": "^0.1.5"
+  }
+}
