@@ -11,11 +11,13 @@ var api = new WhenIWork(config.wheniwork.api_key, config.wheniwork.username, con
 // we want to retrieve its parent_shift param from those notes object, and then search for all notes in the chain with that. 
 function dropShift(email, shiftID) {
 	api.get('users', function (users) {
+		var userID;
 	    users = users.users;
 	    for (var i in users) {
 	        if (users[i].email == email) {
+	        	userID = users[i].id;
 	            var q = {
-	                user_id: users[i].id,
+	                user_id: userID,
 	                start: moment().add(-1, 'day').format('YYYY-MM-DD 00:00:00'),
 	                end: moment().add(50, 'years').format('YYYY-MM-DD HH:mm:ss'),
 	                unpublished: true,
@@ -30,8 +32,8 @@ function dropShift(email, shiftID) {
 
 	            // First retrieve parent_shift param from the initial shift we're trying to delete. 
 	            api.get('shifts/' + shiftID, function(response){ 
-	            	var shift = response.shift
-	            	var notes = JSON.parse(response.shift.notes)
+	            	var shift = response.shift;
+	            	var notes = JSON.parse(response.shift.notes);
 	            	parentShift = parseInt(notes.parent_shift);
 	            	console.log('response from getting original shift: \n', response); 
 
@@ -41,11 +43,14 @@ function dropShift(email, shiftID) {
 	            	    var batchPayload = [];
 	            	    for (var i in shifts.shifts) {
 	            	        var shift = shifts.shifts[i];
+	            	        if (parseInt(shift.user_id) !==  userID) {
+	            	        	continue;
+	            	        }
 	            	       	var childNotes = JSON.parse(shift.notes);
-	            	        console.log('parsing shift with id of ', shift.id, ', notes.parent_shift: ', childNotes.parent_shift, ' actual parentShift id: ', parentShift);
+	            	        // console.log('parsing shift with id of ', shift.id, ', notes.parent_shift: ', childNotes.parent_shift, ' actual parentShift id: ', parentShift);
 
 	            	        if (parseInt(childNotes.parent_shift) === parentShift) {
-	            	        	console.log('new shift with id of ', shift.id, ' added to batch, notes.parent_shift: ', childNotes.parent_shift, ' actual parentShift id: ', parentShift);
+	            	        	// console.log('new shift with id of ', shift.id, ' added to batch, notes.parent_shift: ', childNotes.parent_shift, ' actual parentShift id: ', parentShift);
 
 	            	        	// If the shift starts within a week, it's a shift that needs to be converted to an 
 	            	        	// open shift because the open shift job has already run and passed that day. 

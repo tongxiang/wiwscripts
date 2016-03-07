@@ -7,6 +7,7 @@ var config = require('./config.js');
 
 var api = new WhenIWork(config.wheniwork.api_key, config.wheniwork.username, config.wheniwork.password);
 
+// 1) email of user for shift to be removed from, 2) shift ID of shift to be moved, 3) userID of new user to assign shifts to
 function assignShift(email, shiftID, newUserID) {
 	var newUserID = newUserID;
 	api.get('users', function (users) {
@@ -29,10 +30,10 @@ function assignShift(email, shiftID, newUserID) {
 
 	            // First retrieve parent_shift param from the initial shift we're trying to delete. 
 	            api.get('shifts/' + shiftID, function(response){ 
+	            	console.log('response from getting original shift: \n', response); 
 	            	var shift = response.shift
 	            	var notes = JSON.parse(response.shift.notes)
 	            	parentShift = parseInt(notes.parent_shift);
-	            	console.log('response from getting original shift: \n', response); 
 
 	            	// Then, using that parent_shift param, delete all shifts with that parent_shift param. 
 	            	api.get('shifts', q, function (shifts) {
@@ -78,6 +79,6 @@ function assignShift(email, shiftID, newUserID) {
 	});
 }
 
-assignShift('admin+schwartzcamerongmailcom@crisistextline.org', '279305455', '5677279');
+// assignShift('admin+schwartzcamerongmailcom@crisistextline.org', '279305455', '5677279');
 
 module.exports = assignShift;
