@@ -1,4 +1,4 @@
-// Retrieves all shifts for a given user. 
+// Retrieves all shifts for a given user.
 
 var WhenIWork = require('wheniwork-unofficial');
 var moment = require('moment');

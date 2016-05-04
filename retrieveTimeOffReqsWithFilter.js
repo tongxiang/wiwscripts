@@ -12,8 +12,7 @@ var api = new WhenIWork(config.wheniwork.api_key, config.wheniwork.username, con
 var startDate = 1460952000000;
 var endDate = 1462248000000;
 
-// Currently returns all users who are taking any time off, at all, between the start date and the end date. (The time off requests call returns all time off requests that share any portion of the search interval.) More notes below.
-
+// Currently finds ALL time off requests GREATER than 7 days, the intervals of which BEGIN or END in FEB or MARCH.
 function handleTimeOffRequests() {
     //Using moment.js to format time as WIW expects
     var startDateToRetrieveRequests = moment(startDate).format(date_format);
@@ -26,7 +25,29 @@ function handleTimeOffRequests() {
     //Get all time off requests within timeOffSearchParams
     api.get('requests', timeOffSearchParams, function(response) {
         // console.log(response)
-        async.map(response.requests, retrieveUserNameAndEmailReturnTransformedItem, function(err, results) {
+        var allRequests = response.requests;
+        var relevantRequests = allRequests;
+
+        var relevantRequests = allRequests.filter(function(request) {
+            var parsedStartMonth = moment(request.start_time).format('MM');
+            var parsedEndMonth = moment(request.end_time).format('MM');
+            var startsInFebOrMarch = (parsedStartMonth === '02' || parsedStartMonth === '03');
+            var endsInFebOrMarch = (parsedEndMonth === '02' || parsedEndMonth === '03');
+            var diffInMilliseconds = moment(request.end_time) - moment(request.start_time);
+            var timeOffGreaterThanAWeek = false;
+            // console.log(diffInMilliseconds, '-->', (diffInMilliseconds / (1000*60*60*24)))
+            if ((diffInMilliseconds / (1000*60*60*24)) > 7) {
+                timeOffGreaterThanAWeek = true;
+            }
+            if ((startsInFebOrMarch || endsInFebOrMarch) && timeOffGreaterThanAWeek) {
+                // console.log('saving this');
+                return true;
+            }
+            // console.log('not saving this');
+            return false;
+        })
+
+        async.map(relevantRequests, retrieveUserNameAndEmailReturnTransformedItem, function(err, results) {
             fs.writeFile("timeOffRequestResponse", JSON.stringify(results), function(err) {
                 if(err) {
                     return console.log(err);
@@ -53,36 +74,3 @@ function retrieveUserNameAndEmailReturnTransformedItem(item, callback) {
 }
 
 handleTimeOffRequests();
-
-/**
-
-TimeOff Request API query parameters:
-When retrieving time off requests, you will receive any requests that have time between the dates you pass. However, the end date is not inclusive. If you were to do a request like this:
-
-/2/requests?start=2016-05-01&end=2016-05-03
-
-you would not receive any requests on 2016-05-03 since it assumes a time of 00:00:00 and is looking for anything before that time. Basically, it sees
-
- /2/requests?start=2016-05-01 00:00:00&end=2016-05-03 00:00:00
-
-If you instead sent a request like this:
-
-/2/requests?start=2016-05-01&end=2016-05-03 23:59:59
-
-you would receive requests that had time through the day on 05/03.
-
-So, to break scenarios down further, a request of
-
-/2/requests?start=2016-05-01&end=2016-05-03 23:59:59
-
-would include the following requests since they have time that cross that span:
-
-2016-05-01 00:00:00 - 2016-05-01 23:59:59
-
-2016-04-01 00:00:00 - 2016-05-02 00:00:00
-
-2016-04-01 00:00:00 - 2016-05-04 00:00:00
-
-2016-05-03 00:00:00 - 2016-05-03 23:59:59
-
-**/
