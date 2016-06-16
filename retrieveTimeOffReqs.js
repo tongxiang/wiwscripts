@@ -10,7 +10,7 @@ var millisecondsInDay = 86400000;
 
 var api = new WhenIWork(config.wheniwork.api_key, config.wheniwork.username, config.wheniwork.password);
 
-var startDate = 1461556800000;
+var startDate = 1466740800000;
 // var endDate = 1462248000000;
 
 // Currently returns all users who are taking any time off, at all, between the start date and the end date. (The time off requests call returns all time off requests that share any portion of the search interval.) More notes below.
@@ -18,7 +18,7 @@ var startDate = 1461556800000;
 // Note that we can only retrieve up to 200 time off requests per call. So we'll need to run this in a loop.
 
 function retrieveRequests(startDate) {
-    var taskArray = []
+    var taskArray = [];
 
     for (var i = 0; i < 14; i++) {
         var task = function(callback) {
@@ -41,9 +41,9 @@ function retrieveRequests(startDate) {
                     }
                     callback(null, results);
                     return;
-                })
+                });
             });
-        }
+        };
         taskArray.push(task);
     }
 
